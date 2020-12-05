@@ -20,6 +20,7 @@ const (
 	defaultWidth   = 0
 	defaultHeight  = 0
 	defaultDegree  = 90
+	defaultSigma   = 0.0
 )
 
 var formats = map[string]imaging.Format{
@@ -176,6 +177,7 @@ func (p Processor) newBackendOptionsFromParameters(operation engine.Operation, q
 		height  = defaultHeight
 		width   = defaultWidth
 		degree  = defaultDegree
+		sigma   = defaultSigma
 	)
 
 	q, ok := qs["q"].(string)
@@ -239,6 +241,13 @@ func (p Processor) newBackendOptionsFromParameters(operation engine.Operation, q
 		}
 	}
 
+	if s, ok := qs["s"].(string); ok {
+		sigma, err = strconv.ParseFloat(s, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &backend.Options{
 		Width:    width,
 		Height:   height,
@@ -248,5 +257,6 @@ func (p Processor) newBackendOptionsFromParameters(operation engine.Operation, q
 		Quality:  quality,
 		Degree:   degree,
 		Color:    color,
+		Sigma:    sigma,
 	}, nil
 }

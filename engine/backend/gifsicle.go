@@ -34,6 +34,11 @@ func (b *Gifsicle) Flip(*image.ImageFile, *Options) ([]byte, error) {
 	return nil, MethodNotImplementedError
 }
 
+// Blur implements Backend.
+func (b *Gifsicle) Blur(*image.ImageFile, *Options) ([]byte, error) {
+	return nil, MethodNotImplementedError
+}
+
 // Resize implements Backend.
 func (b *Gifsicle) Resize(imgfile *image.ImageFile, opts *Options) ([]byte, error) {
 	cmd := exec.Command(b.Path,

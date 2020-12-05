@@ -21,6 +21,7 @@ type Options struct {
 	Color    string
 	Degree   int
 	Images   []image.ImageFile
+	Sigma    float64
 }
 
 // Engine is an interface to define an image engine
@@ -32,4 +33,5 @@ type Backend interface {
 	Rotate(img *image.ImageFile, options *Options) ([]byte, error)
 	Fit(img *image.ImageFile, options *Options) ([]byte, error)
 	Flat(background *image.ImageFile, options *Options) ([]byte, error)
+	Blur(background *image.ImageFile, options *Options) ([]byte, error)
 }

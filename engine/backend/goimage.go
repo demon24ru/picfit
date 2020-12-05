@@ -181,6 +181,17 @@ func (e *GoImage) Flip(img *imagefile.ImageFile, options *Options) ([]byte, erro
 	return e.ToBytes(transform(image), options.Format, options.Quality)
 }
 
+func (e *GoImage) Blur(img *imagefile.ImageFile, options *Options) ([]byte, error) {
+	image, err := e.Source(img)
+	if err != nil {
+		return nil, err
+	}
+
+	sigma := options.Sigma
+
+	return e.ToBytes(imaging.Blur(image, sigma), options.Format, options.Quality)
+}
+
 func (e *GoImage) Thumbnail(img *imagefile.ImageFile, options *Options) ([]byte, error) {
 	if options.Format == imaging.GIF {
 		content, err := e.TransformGIF(img, options, imaging.Thumbnail)

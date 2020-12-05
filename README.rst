@@ -355,7 +355,7 @@ Parameters to call the picfit service are:
 
 .. code-block:: html
 
-    <img src="http://localhost:3001/{method}?url={url}&path={path}&w={width}&h={height}&upscale={upscale}&sig={sig}&op={operation}&fmt={format}&q={quality}&deg={degree}&pos={position}"
+    <img src="http://localhost:3001/{method}?url={url}&path={path}&w={width}&h={height}&upscale={upscale}&sig={sig}&op={operation}&fmt={format}&q={quality}&deg={degree}&pos={position}&s={sigma}"
 
 - **path** - The filepath to load the image using your source storage
 - **operation** - The operation to perform, see Operations_
@@ -369,6 +369,7 @@ Parameters to call the picfit service are:
 - **quality** - The quality to save the image, by default the quality will be the highest possible, it will be only applied on ``JPEG`` format
 - **degree** - The degree (``90``, ``180``, ``270``) to rotate the image
 - **position** - The position to flip the image
+- **sigma** - Sigma parameter must be positive and indicates how much the image will be blurred.
 
 To use this service, include the service url as replacement
 for your images, for example:
@@ -469,6 +470,18 @@ Flat can be used only with the [multiple operation system].
 - **pos** - the destination rectangle
 
 In order to understand the Flat operation, please read the following `docs <https://github.com/thoas/picfit/blob/superpose-images/docs/flat.md>`_.
+
+Blur
+------
+
+Blur produces a blurred version of the image using a Gaussian function.
+
+Sigma parameter must be positive and indicates how much the image will be blurred.
+
+-  **s** - The desired image's how much the image will be blurred
+
+You have to pass the ``blur`` value to the ``op`` parameter to use this operation.
+
 
 Methods
 =======

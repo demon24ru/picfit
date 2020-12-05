@@ -97,6 +97,10 @@ func (e *Lilliput) Fit(img *imagefile.ImageFile, options *Options) ([]byte, erro
 	return nil, MethodNotImplementedError
 }
 
+func (e *Lilliput) Blur(img *imagefile.ImageFile, options *Options) ([]byte, error) {
+	return nil, MethodNotImplementedError
+}
+
 func (e *Lilliput) transform(img *imagefile.ImageFile, options *lilliput.ImageOptions, upscale bool) ([]byte, error) {
 	decoder, err := lilliput.NewDecoder(img.Source)
 	if err != nil {

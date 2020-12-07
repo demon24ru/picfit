@@ -8,7 +8,7 @@ import (
 )
 
 func TestEngineOperationFromQuery(t *testing.T) {
-	op := "op:resize w:123 h:321 upscale:true pos:top q:99"
+	op := "op:resize w:123 h:321 upscale:true pos:top q:99 s:30"
 	processor := tests.NewDummyProcessor()
 	operation, err := processor.NewEngineOperationFromQuery(op)
 	assert.Nil(t, err)
@@ -18,5 +18,6 @@ func TestEngineOperationFromQuery(t *testing.T) {
 	assert.Equal(t, operation.Options.Width, 123)
 	assert.Equal(t, operation.Options.Position, "top")
 	assert.Equal(t, operation.Options.Quality, 99)
+	assert.Equal(t, operation.Options.Sigma, 30)
 	assert.True(t, operation.Options.Upscale)
 }

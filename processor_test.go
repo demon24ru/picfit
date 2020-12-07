@@ -607,6 +607,20 @@ func TestDummyApplication(t *testing.T) {
 					Height: 100,
 				},
 			},
+			{
+				URL: fmt.Sprintf("http://example.com/display?url=%s&op=op:resize+w:100+h:50&op=op:blur+s:30", u.String()),
+				Dimensions: &tests.Dimension{
+					Width:  50,
+					Height: 100,
+				},
+			},
+			{
+				URL: fmt.Sprintf("http://example.com/display?url=%s&op=resize&w=100&h=50&op=op:blur+s:30", u.String()),
+				Dimensions: &tests.Dimension{
+					Width:  50,
+					Height: 100,
+				},
+			},
 		}
 
 		for _, test := range tests {

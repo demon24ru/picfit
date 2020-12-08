@@ -27,6 +27,6 @@
     "enable_cascade_delete": true
   },
   "allowed_headers": ["Content-Type", "Authorization", "Accept", "Accept-Encoding", "Accept-Language"],
-  "allowed_origins": ["*.clubnika.me"],
+  "allowed_origins": ["*"],
   "allowed_methods": ["GET", "HEAD"]
 }

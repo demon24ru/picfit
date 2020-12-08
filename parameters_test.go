@@ -18,6 +18,6 @@ func TestEngineOperationFromQuery(t *testing.T) {
 	assert.Equal(t, operation.Options.Width, 123)
 	assert.Equal(t, operation.Options.Position, "top")
 	assert.Equal(t, operation.Options.Quality, 99)
-	assert.Equal(t, operation.Options.Sigma, 30)
+	assert.Equal(t, operation.Options.Sigma, 30.0)
 	assert.True(t, operation.Options.Upscale)
 }

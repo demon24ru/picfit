@@ -1,0 +1,32 @@
+{
+  "kvstore": {
+    "type": "redis",
+    "redis": {
+      "host": "127.0.0.1",
+      "port": 6379,
+      "password": "",
+      "db": 1
+    }
+  },
+  "port": 3001,
+  "storage": {
+    "src": {
+      "type": "http+fs",
+      "base_url": "https://cdn.clubnika.me",
+      "location": "/home/picfit"
+    }
+  },
+  "shard": {
+    "width": 1,
+    "depth": 2,
+    "restonly": true
+  },
+  "options": {
+    "enable_upload": true,
+    "enable_delete": true,
+    "enable_cascade_delete": true
+  },
+  "allowed_headers": ["Content-Type", "Authorization", "Accept", "Accept-Encoding", "Accept-Language"],
+  "allowed_origins": ["*.clubnika.me"],
+  "allowed_methods": ["GET", "HEAD"]
+}

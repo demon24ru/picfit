@@ -40,6 +40,15 @@ build:
 	@(mkdir -p $(BIN_DIR))
 	@(go build -mod=vendor -o $(BIN_DIR)/picfit ./cmd/picfit/main.go)
 	@(echo "-> picfit binary created")
+	@(ln -s $(BIN_DIR)/picfit /usr/local/bin/picfit)
+	@(ln -s ./config.example.json /usr/local/bin/picfit.config.json)
+	@(echo "-> create link from binary file to /usr/local/bin")
+	@(mkdir -p /home/picfit)
+	@(chmod -R 755 /home/picfit)
+	@(echo "-> create directory /home/picfit 755")
+	@(ln -s  ./picfit.service /lib/systemd/system/picfit.service)
+	@(systemctl enable picfit.service)
+	@(echo "-> add picfit.service and enable")
 
 format:
 	@(go fmt ./...)

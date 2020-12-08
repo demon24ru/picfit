@@ -13,6 +13,7 @@ Restart=always
 TimeoutStopSec=5
 TimeoutStartSec=150
 
+PermissionsStartOnly=true
 ExecStartPre=/bin/mkdir -p /var/log/picfit
 ExecStartPre=/bin/chown syslog:adm /var/log/picfit
 ExecStartPre=/bin/chmod 755 /var/log/picfit

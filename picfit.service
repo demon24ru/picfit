@@ -5,11 +5,9 @@ After=network.target
 [Service]
 User=root
 Group=root
-Type=forking
-PIDFile=/run/picfit.pid
+Type=simple
 ExecStart=/usr/local/bin/picfit --config=/usr/local/bin/picfit.config.json
-ExecStop=/bin/kill -USR2 $(cat /run/picfit.pid)
-Restart=always
+ExecStop=/bin/pkill picfit
 TimeoutStopSec=5
 TimeoutStartSec=150
 

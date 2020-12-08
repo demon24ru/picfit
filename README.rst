@@ -44,7 +44,7 @@ picfit has also a Docker integration to built a unix binary without having to in
 Debian and Ubuntu
 -----------------
 
-We will provide Debian package when we will be completely stable ;)
+`` systemctl start picfit.service ``
 
 Configuration
 =============

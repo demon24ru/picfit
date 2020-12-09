@@ -11,7 +11,7 @@ ExecStart=/usr/local/bin/picfit --config=/usr/local/bin/picfit.config.json
 ExecStop=/bin/pkill picfit
 TimeoutStopSec=5
 TimeoutStartSec=150
-Restart=on-failure
+Restart=always
 RestartSec=10
 startLimitIntervalSec=60
 

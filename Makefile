@@ -39,16 +39,41 @@ build:
 	@(echo "-> Compiling picfit binary")
 	@(mkdir -p $(BIN_DIR))
 	@(go build -mod=vendor -o $(BIN_DIR)/picfit ./cmd/picfit/main.go)
-	@(echo "-> picfit binary created")
-	@(ln -s $(BIN_DIR)/picfit /usr/local/bin/picfit)
-	@(ln -s $(ROOT_DIR)/config.example.json /usr/local/bin/picfit.config.json)
+	@(echo "-> picfit binary created successfully")
+
+install:
+	@(test ! -f /usr/local/bin/picfit && ln -s $(BIN_DIR)/picfit /usr/local/bin/picfit)
+	@(test ! -f /usr/local/bin/picfit.config.json && ln -s $(ROOT_DIR)/config.example.json /usr/local/bin/picfit.config.json)
 	@(echo "-> create link from binary file to /usr/local/bin")
-	@(mkdir -p /home/picfit)
+	@(test ! -d /home/picfit && mkdir -p /home/picfit)
 	@(chmod -R 755 /home/picfit)
-	@(echo "-> create directory /home/picfit 755")
-	@(ln -s  $(ROOT_DIR)/picfit.service /lib/systemd/system/picfit.service)
+	@(echo "-> create directory /home/picfit with rights root:755")
+	@(test ! -f /lib/systemd/system/picfit.service && ln -s $(ROOT_DIR)/picfit.service /lib/systemd/system/picfit.service)
 	@(systemctl enable picfit.service)
 	@(echo "-> add picfit.service and enable")
+	@(echo "-> to start the service, enter `systemctl start picfit.service`")
+
+update:
+	@(test ! -f /usr/local/bin/picfit && ln -s $(BIN_DIR)/picfit /usr/local/bin/picfit)
+	@(test ! -f /usr/local/bin/picfit.config.json && ln -s $(ROOT_DIR)/config.example.json /usr/local/bin/picfit.config.json)
+	@(echo "-> create link from binary file to /usr/local/bin")
+	@(test ! -f /lib/systemd/system/picfit.service && ln -s $(ROOT_DIR)/picfit.service /lib/systemd/system/picfit.service)
+	@(systemctl daemon-reload)
+	@(echo "-> update picfit.service")
+
+remove:
+	@(test -f /usr/local/bin/picfit && rm /usr/local/bin/picfit)
+	@(test -f /usr/local/bin/picfit.config.json && rm /usr/local/bin/picfit.config.json)
+	@(echo "-> delete files on /usr/local/bin")
+	@(systemctl stop picfit.service)
+	@(systemctl disable picfit.service)
+	@(systemctl remove picfit.service)
+	@(test -f /lib/systemd/system/picfit.service && rm /lib/systemd/system/picfit.service)
+	@(systemctl daemon-reload)
+	@(echo "-> delete picfit.service")
+	@(rm -R /var/log/picfit)
+	@(rm -R $(BIN_DIR))
+	@(echo "-> delete logs and build files")
 
 format:
 	@(go fmt ./...)

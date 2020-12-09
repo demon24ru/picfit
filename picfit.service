@@ -1,19 +1,22 @@
 [Unit]
-Description=A picfit server
+Description=A picfit server service
 After=network.target
 
 [Service]
 User=root
 Group=root
 Type=simple
+WorkingDirectory=/home/picfit
 ExecStart=/usr/local/bin/picfit --config=/usr/local/bin/picfit.config.json
 ExecStop=/bin/pkill picfit
 TimeoutStopSec=5
 TimeoutStartSec=150
+Restart=on-failure
+RestartSec=10
+startLimitIntervalSec=60
 
 PermissionsStartOnly=true
 ExecStartPre=/bin/mkdir -p /var/log/picfit
-ExecStartPre=/bin/chown syslog:adm /var/log/picfit
 ExecStartPre=/bin/chmod 755 /var/log/picfit
 StandardOutput=syslog
 StandardError=syslog

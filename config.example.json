@@ -6,7 +6,8 @@
       "port": 6379,
       "password": "",
       "db": 0
-    }
+    },
+    "prefix": "picfit:"
   },
   "port": 3001,
   "storage": {

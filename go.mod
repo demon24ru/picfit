@@ -2,7 +2,6 @@ module github.com/thoas/picfit
 
 require (
 	cloud.google.com/go v0.39.0 // indirect
-	github.com/buger/jsonparser v1.0.0
 	github.com/cstockton/go-conv v0.0.0-20170524002450-66a2b2ba36e1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/discordapp/lilliput v0.0.0-20190402233613-eaffdc08248b

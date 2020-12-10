@@ -9,9 +9,6 @@ cloud.google.com/go/internal/version
 cloud.google.com/go/storage
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/buger/jsonparser v1.0.0
-## explicit
-github.com/buger/jsonparser
 # github.com/cstockton/go-conv v0.0.0-20170524002450-66a2b2ba36e1
 ## explicit
 github.com/cstockton/go-conv

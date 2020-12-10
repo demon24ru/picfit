@@ -76,7 +76,6 @@ remove:
 	@(echo "-> delete files on /usr/local/bin")
 	@(systemctl stop picfit.service)
 	@(systemctl disable picfit.service)
-	@(systemctl remove picfit.service)
 	@(test -f /lib/systemd/system/picfit.service && rm /lib/systemd/system/picfit.service)
 	@(systemctl daemon-reload)
 	@(echo "-> delete picfit.service")

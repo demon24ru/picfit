@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 
 	conv "github.com/cstockton/go-conv"
@@ -33,7 +34,7 @@ type Processor struct {
 }
 
 // Upload uploads a file to its storage
-func (p *Processor) Upload(payload *payload.Multipart) (*image.ImageFile, error) {
+func (p *Processor) Upload(c *gin.Context, payload *payload.Multipart) (*image.ImageFile, error) {
 	var fh io.ReadCloser
 
 	fh, err := payload.Data.Open()
@@ -49,14 +50,21 @@ func (p *Processor) Upload(payload *payload.Multipart) (*image.ImageFile, error)
 		return nil, errors.Wrapf(err, "unable to read data from uploaded file")
 	}
 
-	err = p.SourceStorage.Save(payload.Data.Filename, gostorages.NewContentFile(dataBytes.Bytes()))
+	uuid, err := hash.UUID()
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to save data on storage as: %s", payload.Data.Filename)
+		return nil, errors.Wrapf(err, "error crypto/rand function")
+	}
+
+	filename := fmt.Sprintf("%s%s", uuid, path.Ext(payload.Data.Filename))
+	err = p.SourceStorage.Save(filename, gostorages.NewContentFile(dataBytes.Bytes()))
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to save data on storage as: %s", filename)
 	}
 
 	return &image.ImageFile{
-		Filepath: payload.Data.Filename,
+		Filepath: filename,
 		Storage:  p.SourceStorage,
+		Source:   dataBytes.Bytes(),
 	}, nil
 }
 
@@ -247,7 +255,7 @@ func (p *Processor) ProcessContext(c *gin.Context, opts ...Option) (*image.Image
 			img, err := p.fileFromStorage(storeKey, filepath, options.Load)
 			//no such file, just reprocess (maybe file cache was purged)
 			if err != nil && os.IsNotExist(err) {
-				return p.processImage(c, storeKey, options.Async)
+				return p.processImage(c, storeKey, options)
 			}
 			return img, err
 		}
@@ -261,7 +269,7 @@ func (p *Processor) ProcessContext(c *gin.Context, opts ...Option) (*image.Image
 			logger.String("key", storeKey))
 	}
 
-	return p.processImage(c, storeKey, options.Async)
+	return p.processImage(c, storeKey, options)
 }
 
 func (p *Processor) fileFromStorage(key string, filepath string, load bool) (*image.ImageFile, error) {
@@ -286,7 +294,7 @@ func (p *Processor) fileFromStorage(key string, filepath string, load bool) (*im
 	return file, nil
 }
 
-func (p *Processor) processImage(c *gin.Context, storeKey string, async bool) (*image.ImageFile, error) {
+func (p *Processor) processImage(c *gin.Context, storeKey string, options Options) (*image.ImageFile, error) {
 	var (
 		filepath string
 		err      error
@@ -321,25 +329,28 @@ func (p *Processor) processImage(c *gin.Context, storeKey string, async bool) (*
 		return nil, errors.Wrap(err, "unable to process image")
 	}
 
-	file, err = p.Engine.Transform(parameters.Output, parameters.Operations)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to process image")
+	if len(parameters.Operations) != 0 {
+		file, err = p.Engine.Transform(parameters.Output, parameters.Operations)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to process image")
+		}
+
+		filename := p.ShardFilename(storeKey)
+		file.Filepath = fmt.Sprintf("%s.%s", filename, file.Format())
+
+		if options.Async == true {
+			go p.Store(filepath, file)
+		} else {
+			err = p.Store(filepath, file)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unable to store processed image: %s", filepath)
+			}
+		}
 	}
 
-	filename := p.ShardFilename(storeKey)
-	file.Filepath = fmt.Sprintf("%s.%s", filename, file.Format())
 	file.Storage = p.DestinationStorage
 	file.Key = storeKey
 	file.Headers["ETag"] = storeKey
-
-	if async == true {
-		go p.Store(filepath, file)
-	} else {
-		err = p.Store(filepath, file)
-		if err != nil {
-			return nil, errors.Wrapf(err, "unable to store processed image: %s", filepath)
-		}
-	}
 
 	return file, nil
 }

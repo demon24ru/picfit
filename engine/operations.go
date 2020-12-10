@@ -14,9 +14,9 @@ const (
 	Rotate    = Operation("rotate")
 	Flip      = Operation("flip")
 	Fit       = Operation("fit")
-	Noop      = Operation("noop")
-	Flat      = Operation("flat")
-	Blur      = Operation("blur")
+	//Noop      = Operation("noop")
+	Flat = Operation("flat")
+	Blur = Operation("blur")
 )
 
 var Operations = map[string]Operation{
@@ -25,9 +25,9 @@ var Operations = map[string]Operation{
 	Flip.String():      Flip,
 	Rotate.String():    Rotate,
 	Fit.String():       Fit,
-	Noop.String():      Noop,
-	Flat.String():      Flat,
-	Blur.String():      Blur,
+	//Noop.String():      Noop,
+	Flat.String(): Flat,
+	Blur.String(): Blur,
 }
 
 type EngineOperation struct {

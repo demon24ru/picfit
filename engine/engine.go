@@ -132,8 +132,8 @@ func (e Engine) Transform(output *image.ImageFile, operations []EngineOperation)
 
 func operate(b backend.Backend, img *image.ImageFile, operation Operation, options *backend.Options) ([]byte, error) {
 	switch operation {
-	case Noop:
-		return img.Source, nil
+	//case Noop:
+	//	return img.Source, nil
 	case Flip:
 		return b.Flip(img, options)
 	case Rotate:

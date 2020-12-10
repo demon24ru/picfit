@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/buger/jsonparser"
 	"github.com/thoas/picfit/config"
 	"github.com/thoas/picfit/server"
 	"github.com/thoas/picfit/signature"
@@ -209,9 +210,12 @@ func TestUploadHandler(t *testing.T) {
 
 		assert.Equal(t, 200, res.Code)
 
-		assert.True(t, suite.Processor.FileExists("avatar.png"))
+		v, _, _, err := jsonparser.Get(res.Body.Bytes(), "filename")
+		assert.Nil(t, err)
 
-		file, err := suite.Processor.OpenFile("avatar.png")
+		assert.True(t, suite.Processor.FileExists(string(v[:])))
+
+		file, err := suite.Processor.OpenFile(string(v[:]))
 
 		assert.Nil(t, err)
 		assert.Equal(t, file.Size(), stats.Size())

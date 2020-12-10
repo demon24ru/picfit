@@ -13,6 +13,8 @@ package lilliput
 import "C"
 
 import (
+	"bytes"
+	"encoding/binary"
 	"io"
 	"time"
 	"unsafe"
@@ -36,6 +38,16 @@ const (
 	OrientationRightTop    = ImageOrientation(C.CV_IMAGE_ORIENTATION_RT)
 	OrientationRightBottom = ImageOrientation(C.CV_IMAGE_ORIENTATION_RB)
 	OrientationLeftBottom  = ImageOrientation(C.CV_IMAGE_ORIENTATION_LB)
+
+	pngChunkSizeFieldLen = 4
+	pngChunkTypeFieldLen = 4
+	pngChunkAllFieldsLen = 12
+)
+
+var (
+	pngActlChunkType = []byte{0x61, 0x63, 0x54, 0x4c}
+	pngFctlChunkType = []byte{0x66, 0x63, 0x54, 0x4c}
+	pngFdatChunkType = []byte{0x66, 0x64, 0x41, 0x54}
 )
 
 // PixelType describes the base pixel type of the image.
@@ -62,6 +74,7 @@ type Framebuffer struct {
 type openCVDecoder struct {
 	decoder       C.opencv_decoder
 	mat           C.opencv_mat
+	buf           []byte
 	hasReadHeader bool
 	hasDecoded    bool
 }
@@ -100,6 +113,10 @@ func (h *ImageHeader) PixelType() PixelType {
 // ImageOrientation returns the metadata-based image orientation.
 func (h *ImageHeader) Orientation() ImageOrientation {
 	return h.orientation
+}
+
+func (h *ImageHeader) IsAnimated() bool {
+	return h.numFrames > 1
 }
 
 // NewFramebuffer creates the backing store for a pixel frame buffer.
@@ -250,7 +267,29 @@ func newOpenCVDecoder(buf []byte) (*openCVDecoder, error) {
 	return &openCVDecoder{
 		mat:     mat,
 		decoder: decoder,
+		buf:     buf,
 	}, nil
+}
+
+// detectAPNG detects if a blob contains a PNG with animated segments
+func detectAPNG(maybeAPNG []byte) bool {
+	if !bytes.HasPrefix(maybeAPNG, pngMagic) {
+		return false
+	}
+
+	offset := len(pngMagic)
+	for {
+		if offset+pngChunkAllFieldsLen > len(maybeAPNG) {
+			return false
+		}
+		chunkSize := binary.BigEndian.Uint32(maybeAPNG[offset:])
+		chunkType := maybeAPNG[offset+pngChunkSizeFieldLen : offset+pngChunkSizeFieldLen+pngChunkTypeFieldLen]
+		fullChunkSize := (int)(chunkSize) + pngChunkAllFieldsLen
+		if bytes.Equal(chunkType, pngActlChunkType) || bytes.Equal(chunkType, pngFctlChunkType) || bytes.Equal(chunkType, pngFdatChunkType) {
+			return true
+		}
+		offset += fullChunkSize
+	}
 }
 
 func (d *openCVDecoder) Header() (*ImageHeader, error) {
@@ -262,18 +301,24 @@ func (d *openCVDecoder) Header() (*ImageHeader, error) {
 
 	d.hasReadHeader = true
 
+	numFrames := 1
+	if detectAPNG(d.buf) {
+		numFrames = 2
+	}
+
 	return &ImageHeader{
 		width:       int(C.opencv_decoder_get_width(d.decoder)),
 		height:      int(C.opencv_decoder_get_height(d.decoder)),
 		pixelType:   PixelType(C.opencv_decoder_get_pixel_type(d.decoder)),
 		orientation: ImageOrientation(C.opencv_decoder_get_orientation(d.decoder)),
-		numFrames:   1,
+		numFrames:   numFrames,
 	}, nil
 }
 
 func (d *openCVDecoder) Close() {
 	C.opencv_decoder_release(d.decoder)
 	C.opencv_mat_release(d.mat)
+	d.buf = nil
 }
 
 func (d *openCVDecoder) Description() string {

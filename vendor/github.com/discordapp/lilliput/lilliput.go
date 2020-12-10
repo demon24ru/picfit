@@ -15,8 +15,11 @@ var (
 	ErrBufTooSmall      = errors.New("buffer too small to hold image")
 	ErrFrameBufNoPixels = errors.New("Framebuffer contains no pixels")
 
-	gif87Magic = []byte("GIF87a")
-	gif89Magic = []byte("GIF89a")
+	gif87Magic   = []byte("GIF87a")
+	gif89Magic   = []byte("GIF89a")
+	mp42Magic    = []byte("ftypmp42")
+	mp4IsomMagic = []byte("ftypisom")
+	pngMagic     = []byte{0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a}
 )
 
 // A Decoder decompresses compressed image data.
@@ -54,6 +57,15 @@ type Encoder interface {
 
 func isGIF(maybeGIF []byte) bool {
 	return bytes.HasPrefix(maybeGIF, gif87Magic) || bytes.HasPrefix(maybeGIF, gif89Magic)
+}
+
+func isMP4(maybeMP4 []byte) bool {
+	if len(maybeMP4) < 12 {
+		return false
+	}
+
+	magic := maybeMP4[4:]
+	return bytes.HasPrefix(magic, mp42Magic) || bytes.HasPrefix(magic, mp4IsomMagic)
 }
 
 // NewDecoder returns a Decoder which can be used to decode

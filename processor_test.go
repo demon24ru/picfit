@@ -2,7 +2,6 @@ package picfit_test
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,6 +13,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -224,11 +224,15 @@ func TestUploadHandler(t *testing.T) {
 
 		h, _, _, err := jsonparser.Get(res.Body.Bytes(), "h")
 		assert.Nil(t, err)
-		assert.Equal(t, 400, int(binary.BigEndian.Uint16(h)))
+		hi, err := strconv.Atoi(string(h[:]))
+		assert.Nil(t, err)
+		assert.Equal(t, 400, hi)
 
 		w, _, _, err := jsonparser.Get(res.Body.Bytes(), "w")
 		assert.Nil(t, err)
-		assert.Equal(t, 400, int(binary.BigEndian.Uint16(w)))
+		wi, err := strconv.Atoi(string(w[:]))
+		assert.Nil(t, err)
+		assert.Equal(t, 400, wi)
 
 	}, tests.WithConfig(content))
 }

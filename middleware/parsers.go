@@ -31,10 +31,26 @@ func ParametersParser() gin.HandlerFunc {
 
 				results := parametersReg.SubexpNames()
 
+				var path string
 				for i, name := range results {
 					if i != 0 && match[i] != "" {
 						parameters[name] = match[i]
+						if name == "path" {
+							path = match[i]
+						}
 						fmt.Printf("Pars parameter name=%v value=%v i=%v\n", name, match[i], i)
+					}
+				}
+
+				match = parametersOpsReg.FindStringSubmatch(path)
+				if match != nil {
+					resultsPath := parametersOpsReg.SubexpNames()
+
+					for i, name := range resultsPath {
+						if i != 0 && match[i] != "" {
+							parameters[name] = match[i]
+							fmt.Printf("Pars parameter name=%v value=%v i=%v\n", name, match[i], i)
+						}
 					}
 				}
 

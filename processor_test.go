@@ -2,6 +2,7 @@ package picfit_test
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -176,7 +177,7 @@ func TestUploadHandler(t *testing.T) {
 		defer f.Close()
 
 		body := new(bytes.Buffer)
-		w := multipart.NewWriter(body)
+		wr := multipart.NewWriter(body)
 
 		assert.Nil(t, err)
 
@@ -188,13 +189,13 @@ func TestUploadHandler(t *testing.T) {
 
 		assert.Nil(t, err)
 
-		writer, err := w.CreateFormFile("data", "avatar.png")
+		writer, err := wr.CreateFormFile("data", "avatar.png")
 
 		assert.Nil(t, err)
 
 		writer.Write(fileContent)
 
-		if err := w.Close(); err != nil {
+		if err := wr.Close(); err != nil {
 			t.Fatal(err)
 		}
 
@@ -202,7 +203,7 @@ func TestUploadHandler(t *testing.T) {
 
 		assert.Nil(t, err)
 
-		req.Header.Add("Content-Type", w.FormDataContentType())
+		req.Header.Add("Content-Type", wr.FormDataContentType())
 
 		res := httptest.NewRecorder()
 
@@ -216,10 +217,19 @@ func TestUploadHandler(t *testing.T) {
 		assert.True(t, suite.Processor.FileExists(string(v[:])))
 
 		file, err := suite.Processor.OpenFile(string(v[:]))
-
 		assert.Nil(t, err)
+
 		assert.Equal(t, file.Size(), stats.Size())
 		assert.Equal(t, "application/json; charset=utf-8", res.Header().Get("Content-Type"))
+
+		h, _, _, err := jsonparser.Get(res.Body.Bytes(), "h")
+		assert.Nil(t, err)
+		assert.Equal(t, 400, binary.BigEndian.Uint16(h))
+
+		w, _, _, err := jsonparser.Get(res.Body.Bytes(), "w")
+		assert.Nil(t, err)
+		assert.Equal(t, 400, binary.BigEndian.Uint16(w))
+
 	}, tests.WithConfig(content))
 }
 

@@ -187,7 +187,12 @@ func (e *GoImage) Blur(img *imagefile.ImageFile, options *Options) ([]byte, erro
 		return nil, err
 	}
 
-	sigma := options.Sigma
+	var sigma float64
+	if options.Sigma > 0.0 {
+		sigma = options.Sigma
+	} else {
+		sigma = float64(options.Width)
+	}
 
 	return e.ToBytes(imaging.Blur(image, sigma), options.Format, options.Quality)
 }

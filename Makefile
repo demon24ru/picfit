@@ -7,7 +7,7 @@ now = $(shell date "+%Y-%m-%d %T UTC%z")
 compiler = $(shell go version)
 
 BIN_DIR = $(ROOT_DIR)/bin
-PICFIT_CONFIG_PATH ?= `pwd`/config.json
+PICFIT_CONFIG_PATH ?= $(ROOT_DIR)/config.example.json
 BIN = $(BIN_DIR)/picfit
 SSL_DIR = $(ROOT_DIR)/ssl
 APP_DIR = /go/src/github.com/thoas/picfit

@@ -3,6 +3,7 @@ package picfit
 import (
 	"bytes"
 	"fmt"
+	"github.com/thoas/picfit/constants"
 	"io"
 	"net/url"
 	"os"
@@ -219,7 +220,20 @@ func (p *Processor) ProcessContext(c *gin.Context, opts ...Option) (*image.Image
 		options  = newOptions(opts...)
 	)
 
+	qs := c.MustGet("parameters").(map[string]interface{})
+	_, ok := qs[constants.OperationParamName].(string)
+
 	modifiedSince := c.Request.Header.Get("If-Modified-Since")
+	noneMatch := c.Request.Header.Get("If-None-Match")
+
+	if !ok && noneMatch != "" && force == "" && noneMatch == storeKey {
+		p.logger.Info("Source file not modified",
+			logger.String("key", storeKey),
+			logger.String("modified-since", modifiedSince))
+
+		return nil, failure.ErrFileNotModified
+	}
+
 	if modifiedSince != "" && force == "" {
 		exists, err := p.store.Exists(storeKey)
 		if err != nil {
@@ -255,7 +269,7 @@ func (p *Processor) ProcessContext(c *gin.Context, opts ...Option) (*image.Image
 			img, err := p.fileFromStorage(storeKey, filepath, options.Load)
 			//no such file, just reprocess (maybe file cache was purged)
 			if err != nil && os.IsNotExist(err) {
-				return p.processImage(c, storeKey, options)
+				return p.processImage(c, storeKey, options, qs)
 			}
 			return img, err
 		}
@@ -269,7 +283,7 @@ func (p *Processor) ProcessContext(c *gin.Context, opts ...Option) (*image.Image
 			logger.String("key", storeKey))
 	}
 
-	return p.processImage(c, storeKey, options)
+	return p.processImage(c, storeKey, options, qs)
 }
 
 func (p *Processor) fileFromStorage(key string, filepath string, load bool) (*image.ImageFile, error) {
@@ -294,7 +308,7 @@ func (p *Processor) fileFromStorage(key string, filepath string, load bool) (*im
 	return file, nil
 }
 
-func (p *Processor) processImage(c *gin.Context, storeKey string, options Options) (*image.ImageFile, error) {
+func (p *Processor) processImage(c *gin.Context, storeKey string, options Options, qs map[string]interface{}) (*image.ImageFile, error) {
 	var (
 		filepath string
 		err      error
@@ -305,8 +319,6 @@ func (p *Processor) processImage(c *gin.Context, storeKey string, options Option
 		Storage: p.DestinationStorage,
 		Headers: map[string]string{},
 	}
-
-	qs := c.MustGet("parameters").(map[string]interface{})
 
 	u, exists := c.Get("url")
 	if exists {

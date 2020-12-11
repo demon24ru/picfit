@@ -141,6 +141,12 @@ func OperationParser() gin.HandlerFunc {
 		parameters := c.MustGet("parameters").(map[string]interface{})
 
 		operation, ok := parameters[constants.OperationParamName].(string)
+
+		if !ok {
+			c.Next()
+			return
+		}
+
 		if ok && operation != "" {
 			if _, k := engine.Operations[operation]; !k {
 				c.String(http.StatusBadRequest, fmt.Sprintf("Invalid method %s or invalid parameters", operation))

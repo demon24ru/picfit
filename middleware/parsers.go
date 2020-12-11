@@ -16,7 +16,7 @@ import (
 	"github.com/thoas/picfit/util"
 )
 
-var parametersReg = regexp.MustCompile(`(?:(?P<sig>\w+)/)?(?P<path>[\w\-/.]+)`)
+var parametersReg = regexp.MustCompile(`(?:(?P<sig>\w+))?/?(?P<path>[\w\-/.]+)`)
 var parametersOpsReg = regexp.MustCompile(`(?P<op>\w+)/(?:(?P<w>\d+))?x(?:(?P<h>\d+))?/(?P<path>[\w\-/.]+)`)
 
 // ParametersParser matches parameters to query string

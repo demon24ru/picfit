@@ -226,13 +226,13 @@ func TestUploadHandler(t *testing.T) {
 		assert.Nil(t, err)
 		hi, err := strconv.Atoi(string(h[:]))
 		assert.Nil(t, err)
-		assert.Equal(t, 400, hi)
+		assert.Equal(t, hi, 400)
 
 		w, _, _, err := jsonparser.Get(res.Body.Bytes(), "w")
 		assert.Nil(t, err)
 		wi, err := strconv.Atoi(string(w[:]))
 		assert.Nil(t, err)
-		assert.Equal(t, 400, wi)
+		assert.Equal(t, wi, 400)
 
 	}, tests.WithConfig(content))
 }

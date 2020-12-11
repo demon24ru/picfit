@@ -224,11 +224,11 @@ func TestUploadHandler(t *testing.T) {
 
 		h, _, _, err := jsonparser.Get(res.Body.Bytes(), "h")
 		assert.Nil(t, err)
-		assert.Equal(t, 400, binary.BigEndian.Uint16(h))
+		assert.Equal(t, 400, int(binary.BigEndian.Uint16(h)))
 
 		w, _, _, err := jsonparser.Get(res.Body.Bytes(), "w")
 		assert.Nil(t, err)
-		assert.Equal(t, 400, binary.BigEndian.Uint16(w))
+		assert.Equal(t, 400, int(binary.BigEndian.Uint16(w)))
 
 	}, tests.WithConfig(content))
 }

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/thoas/picfit/logger"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -33,6 +34,7 @@ func ParametersParser() gin.HandlerFunc {
 				for i, name := range results {
 					if i != 0 && match[i] != "" {
 						parameters[name] = match[i]
+						logger.Logger.Info("Pars parameter", name, logger.String("name", match[i]))
 					}
 				}
 

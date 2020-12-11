@@ -338,6 +338,7 @@ func (p *Processor) processImage(c *gin.Context, storeKey string, options Option
 		filename := p.ShardFilename(storeKey)
 		file.Filepath = fmt.Sprintf("%s.%s", filename, file.Format())
 		file.Storage = p.DestinationStorage
+		file.Key = storeKey
 
 		if options.Async == true {
 			go p.Store(filepath, file)

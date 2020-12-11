@@ -16,7 +16,8 @@ import (
 	"github.com/thoas/picfit/util"
 )
 
-var parametersReg = regexp.MustCompile(`(?:(?P<sig>\w+)/)?(?:(?P<op>\w+)/(?:(?P<w>\d+))?x(?:(?P<h>\d+))?/)?(?P<path>[\w\-/.]+)`)
+var parametersReg = regexp.MustCompile(`(?:(?P<sig>\w+)/)?(?P<path>[\w\-/.]+)`)
+var parametersOpsReg = regexp.MustCompile(`(?P<op>\w+)/(?:(?P<w>\d+))?x(?:(?P<h>\d+))?/(?P<path>[\w\-/.]+)`)
 
 // ParametersParser matches parameters to query string
 func ParametersParser() gin.HandlerFunc {
@@ -33,11 +34,15 @@ func ParametersParser() gin.HandlerFunc {
 				for i, name := range results {
 					if i != 0 && match[i] != "" {
 						parameters[name] = match[i]
-						fmt.Printf("Pars parameter name=%v value=%v\n", name, match[i])
+						fmt.Printf("Pars parameter name=%v value=%v i=%v\n", name, match[i], i)
 					}
 				}
 
 				c.Set("parameters", parameters)
+			} else {
+				c.String(http.StatusBadRequest, "Request should contains parameters or query string")
+				c.Abort()
+				return
 			}
 		} else {
 			if c.Query("url") == "" && c.Query("path") == "" {

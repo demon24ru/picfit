@@ -32,12 +32,10 @@ func ParametersParser() gin.HandlerFunc {
 				for i, name := range results {
 					if i != 0 && match[i] != "" {
 						parameters[name] = match[i]
-						fmt.Printf("Pars parameter name=%v value=%v i=%v\n", name, match[i], i)
 					}
 				}
 			} else {
 				parameters["path"] = result[1:]
-				fmt.Printf("Pars parameter name=%v value=%v\n", "path", result[1:])
 			}
 			c.Set("parameters", parameters)
 		} else {

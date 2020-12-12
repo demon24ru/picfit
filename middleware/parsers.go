@@ -36,7 +36,7 @@ func ParametersParser() gin.HandlerFunc {
 					}
 				}
 			} else {
-				parameters["path"] = result
+				parameters["path"] = result[1:]
 			}
 			c.Set("parameters", parameters)
 		} else {

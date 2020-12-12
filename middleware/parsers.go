@@ -37,6 +37,7 @@ func ParametersParser() gin.HandlerFunc {
 				}
 			} else {
 				parameters["path"] = result[1:]
+				fmt.Printf("Pars parameter name=%v value=%v\n", "path", result[1:])
 			}
 			c.Set("parameters", parameters)
 		} else {

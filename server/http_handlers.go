@@ -106,17 +106,21 @@ func (h handlers) upload(c *gin.Context) error {
 // delete deletes a file from storages
 func (h handlers) delete(c *gin.Context) error {
 	var (
-		err         error
-		path        = c.Param("parameters")
-		key, exists = c.Get("key")
+		err            error
+		params, exists = c.Get("parameters")
+		key, _         = c.Get("key")
 	)
-
-	if path == "" && !exists {
+	if !exists {
 		return failure.ErrUnprocessable
 	}
-
-	if !exists {
-		err = h.processor.Delete(path[1:])
+	qs := params.(map[string]interface{})
+	_, ok := qs[constants.OperationParamName].(string)
+	if !ok {
+		path, ok := qs["path"].(string)
+		if !ok {
+			return failure.ErrUnprocessable
+		}
+		err = h.processor.Delete(path)
 	} else {
 		err = h.processor.DeleteChild(key.(string))
 	}

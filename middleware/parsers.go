@@ -25,9 +25,8 @@ func ParametersParser() gin.HandlerFunc {
 
 		if result != "" {
 			match := parametersReg.FindStringSubmatch(result)
+			parameters := make(map[string]interface{})
 			if match != nil {
-				parameters := make(map[string]interface{})
-
 				results := parametersReg.SubexpNames()
 
 				for i, name := range results {
@@ -36,13 +35,10 @@ func ParametersParser() gin.HandlerFunc {
 						fmt.Printf("Pars parameter name=%v value=%v i=%v\n", name, match[i], i)
 					}
 				}
-
-				c.Set("parameters", parameters)
 			} else {
-				c.String(http.StatusBadRequest, "Request should contains parameters or query string")
-				c.Abort()
-				return
+				parameters["path"] = result
 			}
+			c.Set("parameters", parameters)
 		} else {
 			if c.Query("url") == "" && c.Query("path") == "" {
 				c.String(http.StatusBadRequest, "Request should contains parameters or query string")

@@ -28,7 +28,7 @@ Build it
 
 ::
 
-    git clone https://github.com/thoas/picfit.git
+    git clone https://github.com/demon24ru/picfit.git
 
 4. Run ``make build``
 

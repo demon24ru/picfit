@@ -165,6 +165,9 @@ func (e *GoImage) Resize(img *imagefile.ImageFile, options *Options) ([]byte, er
 }
 
 func (e *GoImage) UploadResize(img *imagefile.ImageFile, options *Options) ([]byte, int, int, error) {
+
+	out := img.Source
+
 	if options.Format == imaging.GIF {
 		content, width, height, err := e.TransformUploadGIF(img, options, imaging.Resize)
 		if err != nil {
@@ -179,12 +182,16 @@ func (e *GoImage) UploadResize(img *imagefile.ImageFile, options *Options) ([]by
 		return nil, 0, 0, err
 	}
 
-	image = scale(image, maxResizeOptions(image, options), imaging.Resize)
+	imageOut := scale(image, maxResizeOptions(image, options), imaging.Resize)
 	width, height := imageSize(image)
 
-	out, err := e.ToBytes(image, options.Format, options.Quality)
-	if err != nil {
-		return nil, 0, 0, err
+	if image.Bounds().Size() != imageOut.Bounds().Size() {
+		out, err = e.ToBytes(imageOut, options.Format, options.Quality)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+
+		return out, width, height, nil
 	}
 
 	return out, width, height, nil

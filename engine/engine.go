@@ -43,7 +43,7 @@ func New(cfg config.Config) *Engine {
 
 			if _, err := exec.LookPath(path); err == nil {
 				b = append(b, Backend{
-					Backend:   &backend.Gifsicle{Path: path},
+					//	Backend:   &backend.Gifsicle{Path: path},
 					mimetypes: cfg.Backends.Gifsicle.Mimetypes,
 					weight:    cfg.Backends.Gifsicle.Weight,
 				})
@@ -58,7 +58,7 @@ func New(cfg config.Config) *Engine {
 		}
 		if cfg.Backends.Lilliput != nil {
 			b = append(b, Backend{
-				Backend:   backend.NewLilliput(cfg),
+				//	Backend:   backend.NewLilliput(cfg),
 				mimetypes: cfg.Backends.Lilliput.Mimetypes,
 				weight:    cfg.Backends.Lilliput.Weight,
 			})

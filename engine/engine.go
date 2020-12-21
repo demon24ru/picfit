@@ -43,7 +43,7 @@ func New(cfg config.Config) *Engine {
 
 			if _, err := exec.LookPath(path); err == nil {
 				b = append(b, Backend{
-					Backend:   &backend.Gifsicle{Path: path},
+					//			Backend:   &backend.Gifsicle{Path: path},
 					mimetypes: cfg.Backends.Gifsicle.Mimetypes,
 					weight:    cfg.Backends.Gifsicle.Weight,
 				})
@@ -58,7 +58,7 @@ func New(cfg config.Config) *Engine {
 		}
 		if cfg.Backends.Lilliput != nil {
 			b = append(b, Backend{
-				Backend:   backend.NewLilliput(cfg),
+				//		Backend:   backend.NewLilliput(cfg),
 				mimetypes: cfg.Backends.Lilliput.Mimetypes,
 				weight:    cfg.Backends.Lilliput.Weight,
 			})
@@ -84,11 +84,51 @@ func New(cfg config.Config) *Engine {
 
 func (e Engine) String() string {
 	backendNames := []string{}
-	for _, backend := range e.backends {
-		backendNames = append(backendNames, backend.String())
+	for _, backendd := range e.backends {
+		backendNames = append(backendNames, backendd.String())
 	}
 
 	return strings.Join(backendNames, " ")
+}
+
+func (e Engine) getBackend(output *image.ImageFile) (*Backend, error) {
+	var (
+		err error
+	)
+
+	ct := output.ContentType()
+	for j := range e.backends {
+		for k := range e.backends[j].mimetypes {
+			if ct == e.backends[j].mimetypes[k] {
+				return &e.backends[j], nil
+			}
+		}
+	}
+
+	return nil, err
+}
+
+func (e Engine) UploadTransform(output *image.ImageFile, options *backend.Options) (*image.ImageFile, int, int, error) {
+	var (
+		err       error
+		processed []byte
+		source    = output.Source
+	)
+
+	bcnd, err := e.getBackend(output)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	processed, width, height, err := bcnd.UploadResize(output, options)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	output.Source = source
+	output.Processed = processed
+
+	return output, width, height, nil
 }
 
 func (e Engine) Transform(output *image.ImageFile, operations []EngineOperation) (*image.ImageFile, error) {
@@ -98,29 +138,19 @@ func (e Engine) Transform(output *image.ImageFile, operations []EngineOperation)
 		source    = output.Source
 	)
 
-	ct := output.ContentType()
+	bcnd, err := e.getBackend(output)
 	for i := range operations {
-		for j := range e.backends {
-			var processing bool
-			for k := range e.backends[j].mimetypes {
-				if ct == e.backends[j].mimetypes[k] {
-					processing = true
-					break
-				}
-			}
+		if err != nil {
+			continue
+		}
 
-			if !processing {
-				continue
-			}
-
-			processed, err = operate(e.backends[j], output, operations[i].Operation, operations[i].Options)
-			if err == nil {
-				output.Source = processed
-				break
-			}
-			if err != backend.MethodNotImplementedError {
-				return nil, err
-			}
+		processed, err = operate(bcnd, output, operations[i].Operation, operations[i].Options)
+		if err == nil {
+			output.Source = processed
+			break
+		}
+		if err != backend.MethodNotImplementedError {
+			return nil, err
 		}
 	}
 

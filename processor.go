@@ -35,12 +35,12 @@ type Processor struct {
 }
 
 // Upload uploads a file to its storage
-func (p *Processor) Upload(c *gin.Context, payload *payload.Multipart) (*image.ImageFile, error) {
+func (p *Processor) Upload(c *gin.Context, payload *payload.Multipart) (*image.ImageFile, int, int, error) {
 	var fh io.ReadCloser
 
 	fh, err := payload.Data.Open()
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 	defer fh.Close()
 
@@ -48,25 +48,33 @@ func (p *Processor) Upload(c *gin.Context, payload *payload.Multipart) (*image.I
 
 	_, err = dataBytes.ReadFrom(fh)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to read data from uploaded file")
+		return nil, 0, 0, errors.Wrapf(err, "unable to read data from uploaded file")
 	}
 
 	uuid, err := hash.UUID()
 	if err != nil {
-		return nil, errors.Wrapf(err, "error crypto/rand function")
+		return nil, 0, 0, errors.Wrapf(err, "error crypto/rand function")
 	}
 
 	filename := fmt.Sprintf("%s%s", uuid, path.Ext(payload.Data.Filename))
-	err = p.SourceStorage.Save(filename, gostorages.NewContentFile(dataBytes.Bytes()))
-	if err != nil {
-		return nil, errors.Wrapf(err, "unable to save data on storage as: %s", filename)
-	}
 
-	return &image.ImageFile{
+	output := &image.ImageFile{
 		Filepath: filename,
 		Storage:  p.SourceStorage,
 		Source:   dataBytes.Bytes(),
-	}, nil
+	}
+
+	output, width, height, err := p.Engine.UploadTransform(output, p.UploadParmaOptions(output))
+	if err != nil {
+		return nil, 0, 0, errors.Wrapf(err, "unable to resize data of: %s", filename)
+	}
+
+	err = p.SourceStorage.Save(filename, gostorages.NewContentFile(output.Content()))
+	if err != nil {
+		return nil, 0, 0, errors.Wrapf(err, "unable to save data on storage as: %s", filename)
+	}
+
+	return output, width, height, nil
 }
 
 // Store stores an image file with the defined filepath

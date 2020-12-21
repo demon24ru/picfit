@@ -237,6 +237,97 @@ func TestUploadHandler(t *testing.T) {
 	}, tests.WithConfig(content))
 }
 
+func TestUploadBIGFileHandler(t *testing.T) {
+	tmp := os.TempDir()
+
+	content := `{
+	  "debug": true,
+	  "port": 3001,
+	  "options": {
+		  "enable_upload": true
+	  },
+	  "storage": {
+		"src": {
+		  "type": "fs",
+		  "location": "%s",
+		  "base_url": "http://img.example.com"
+		}
+	  }
+	}`
+
+	content = fmt.Sprintf(content, tmp)
+
+	tests.Run(t, func(t *testing.T, suite *tests.Suite) {
+		server, err := server.New(suite.Config)
+		assert.Nil(t, err)
+
+		f, err := os.Open("tests/fixtures/BIG.jpg")
+		assert.Nil(t, err)
+		defer f.Close()
+
+		body := new(bytes.Buffer)
+		wr := multipart.NewWriter(body)
+
+		assert.Nil(t, err)
+
+		stats, err := f.Stat()
+
+		assert.Nil(t, err)
+
+		fileContent, err := ioutil.ReadAll(f)
+
+		assert.Nil(t, err)
+
+		writer, err := wr.CreateFormFile("data", "BIG.jpg")
+
+		assert.Nil(t, err)
+
+		writer.Write(fileContent)
+
+		if err := wr.Close(); err != nil {
+			t.Fatal(err)
+		}
+
+		req, err := http.NewRequest("POST", "http://www.example.com/upload", body)
+
+		assert.Nil(t, err)
+
+		req.Header.Add("Content-Type", wr.FormDataContentType())
+
+		res := httptest.NewRecorder()
+
+		server.ServeHTTP(res, req)
+
+		assert.Equal(t, 200, res.Code)
+
+		v, _, _, err := jsonparser.Get(res.Body.Bytes(), "filename")
+		assert.Nil(t, err)
+
+		assert.True(t, suite.Processor.FileExists(string(v[:])))
+
+		file, err := suite.Processor.OpenFile(string(v[:]))
+		assert.Nil(t, err)
+
+		assert.NotEqual(t, file.Size(), stats.Size())
+		assert.Equal(t, "application/json; charset=utf-8", res.Header().Get("Content-Type"))
+
+		w, _, _, err := jsonparser.Get(res.Body.Bytes(), "w")
+		assert.Nil(t, err)
+		wi, err := strconv.Atoi(string(w[:]))
+		assert.Nil(t, err)
+		assert.Equal(t, wi, 2000)
+
+		img, err := imaging.Decode(file)
+
+		assert.Nil(t, err)
+
+		if img.Bounds().Max.X != 2000 {
+			t.Fatalf("Invalid width for BIG.jpg: %d != %d", img.Bounds().Max.X, 2000)
+		}
+
+	}, tests.WithConfig(content))
+}
+
 func TestDeleteHandler(t *testing.T) {
 	tmp, err := ioutil.TempDir("", tests.RandString(10))
 

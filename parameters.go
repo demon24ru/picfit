@@ -37,6 +37,19 @@ type Parameters struct {
 }
 
 // newParameters returns Parameters for engine.
+func (p *Processor) UploadParmaOptions(input *image.ImageFile) *backend.Options {
+	return &backend.Options{
+		Upscale: false,
+		Format:  formats[input.Format()],
+		Quality: p.Engine.DefaultQuality,
+		Height:  defaultHeight,
+		Width:   defaultWidth,
+		Degree:  defaultDegree,
+		Sigma:   defaultSigma,
+	}
+}
+
+// newParameters returns Parameters for engine.
 func (p *Processor) NewParameters(input *image.ImageFile, qs map[string]interface{}) (*Parameters, error) {
 	format, ok := qs["fmt"].(string)
 	filepath := input.Filepath

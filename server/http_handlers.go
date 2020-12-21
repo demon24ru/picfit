@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,8 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/mholt/binding"
-
-	"github.com/disintegration/imaging"
 
 	api "gopkg.in/fukata/golang-stats-api-handler.v1"
 
@@ -81,13 +78,7 @@ func (h handlers) upload(c *gin.Context) error {
 		return errs
 	}
 
-	file, err := h.processor.Upload(c, multipartPayload)
-
-	if err != nil {
-		return err
-	}
-
-	img, err := imaging.Decode(bytes.NewReader(file.Source))
+	file, width, height, err := h.processor.Upload(c, multipartPayload)
 	if err != nil {
 		return err
 	}
@@ -96,8 +87,8 @@ func (h handlers) upload(c *gin.Context) error {
 		"filename": file.Filename(),
 		//"path":     file.Path(),
 		"url": file.URL(),
-		"w":   img.Bounds().Max.X,
-		"h":   img.Bounds().Max.Y,
+		"w":   width,
+		"h":   height,
 	})
 
 	return nil

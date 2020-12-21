@@ -61,6 +61,16 @@ func scale(img image.Image, options *Options, trans Transformation) image.Image 
 	return img
 }
 
+func maxResizeOptions(img image.Image, options *Options) *Options {
+	width, height := imageSize(img)
+	if float64(width) == math.Max(float64(width), float64(height)) {
+		options.Width = 2000
+	} else {
+		options.Height = 2000
+	}
+	return options
+}
+
 func imageToPaletted(img image.Image) *image.Paletted {
 	b := img.Bounds()
 	pm := image.NewPaletted(b, palette.Plan9)
@@ -72,21 +82,18 @@ func (e *GoImage) String() string {
 	return "goimage"
 }
 
-func (e *GoImage) TransformGIF(img *imagefile.ImageFile, options *Options, trans Transformation) ([]byte, error) {
-	first, err := gif.Decode(bytes.NewReader(img.Source))
-	if err != nil {
-		return nil, err
-	}
-
+func (e *GoImage) engGIF(first image.Image, img *imagefile.ImageFile, options *Options, trans Transformation) ([]byte, int, int, error) {
 	factor := scalingFactorImage(first, options.Width, options.Height)
 
+	srcW, srcH := imageSize(first)
+
 	if factor > 1 && !options.Upscale {
-		return img.Source, nil
+		return img.Source, srcW, srcH, nil
 	}
 
 	g, err := gif.DecodeAll(bytes.NewReader(img.Source))
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
 	firstFrame := g.Image[0].Bounds()
@@ -98,8 +105,6 @@ func (e *GoImage) TransformGIF(img *imagefile.ImageFile, options *Options, trans
 		draw.Draw(im, bounds, frame, bounds.Min, draw.Over)
 		g.Image[i] = imageToPaletted(scale(im, options, trans))
 	}
-
-	srcW, srcH := imageSize(first)
 
 	if options.Width == 0 {
 		tmpW := float64(options.Height) * float64(srcW) / float64(srcH)
@@ -117,15 +122,33 @@ func (e *GoImage) TransformGIF(img *imagefile.ImageFile, options *Options, trans
 
 	err = gif.EncodeAll(&buf, g)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
-	return buf.Bytes(), nil
+	return buf.Bytes(), options.Width, options.Height, nil
+}
+
+func (e *GoImage) TransformGIF(img *imagefile.ImageFile, options *Options, trans Transformation) ([]byte, int, int, error) {
+	first, err := gif.Decode(bytes.NewReader(img.Source))
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return e.engGIF(first, img, options, trans)
+}
+
+func (e *GoImage) TransformUploadGIF(img *imagefile.ImageFile, options *Options, trans Transformation) ([]byte, int, int, error) {
+	first, err := gif.Decode(bytes.NewReader(img.Source))
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return e.engGIF(first, img, maxResizeOptions(first, options), trans)
 }
 
 func (e *GoImage) Resize(img *imagefile.ImageFile, options *Options) ([]byte, error) {
 	if options.Format == imaging.GIF {
-		content, err := e.TransformGIF(img, options, imaging.Resize)
+		content, _, _, err := e.TransformGIF(img, options, imaging.Resize)
 		if err != nil {
 			return nil, err
 		}
@@ -139,6 +162,32 @@ func (e *GoImage) Resize(img *imagefile.ImageFile, options *Options) ([]byte, er
 	}
 
 	return e.transform(image, options, imaging.Resize)
+}
+
+func (e *GoImage) UploadResize(img *imagefile.ImageFile, options *Options) ([]byte, int, int, error) {
+	if options.Format == imaging.GIF {
+		content, width, height, err := e.TransformUploadGIF(img, options, imaging.Resize)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+
+		return content, width, height, nil
+	}
+
+	image, err := e.Source(img)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	image = scale(image, maxResizeOptions(image, options), imaging.Resize)
+	width, height := imageSize(image)
+
+	out, err := e.ToBytes(image, options.Format, options.Quality)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return out, width, height, nil
 }
 
 func (e *GoImage) transform(img image.Image, options *Options, trans Transformation) ([]byte, error) {
@@ -199,7 +248,7 @@ func (e *GoImage) Blur(img *imagefile.ImageFile, options *Options) ([]byte, erro
 
 func (e *GoImage) Thumbnail(img *imagefile.ImageFile, options *Options) ([]byte, error) {
 	if options.Format == imaging.GIF {
-		content, err := e.TransformGIF(img, options, imaging.Thumbnail)
+		content, _, _, err := e.TransformGIF(img, options, imaging.Thumbnail)
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +266,7 @@ func (e *GoImage) Thumbnail(img *imagefile.ImageFile, options *Options) ([]byte,
 
 func (e *GoImage) Fit(img *imagefile.ImageFile, options *Options) ([]byte, error) {
 	if options.Format == imaging.GIF {
-		content, err := e.TransformGIF(img, options, imaging.Thumbnail)
+		content, _, _, err := e.TransformGIF(img, options, imaging.Thumbnail)
 		if err != nil {
 			return nil, err
 		}

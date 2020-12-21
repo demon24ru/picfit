@@ -183,7 +183,7 @@ func (e *GoImage) UploadResize(img *imagefile.ImageFile, options *Options) ([]by
 	}
 
 	imageOut := scale(image, maxResizeOptions(image, options), imaging.Resize)
-	width, height := imageSize(image)
+	width, height := imageSize(imageOut)
 
 	if image.Bounds().Size() != imageOut.Bounds().Size() {
 		out, err = e.ToBytes(imageOut, options.Format, options.Quality)

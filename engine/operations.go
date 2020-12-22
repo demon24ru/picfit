@@ -25,9 +25,8 @@ var Operations = map[string]Operation{
 	Flip.String():      Flip,
 	Rotate.String():    Rotate,
 	Fit.String():       Fit,
-	//Noop.String():      Noop,
-	Flat.String(): Flat,
-	Blur.String(): Blur,
+	Flat.String():      Flat,
+	Blur.String():      Blur,
 }
 
 type EngineOperation struct {

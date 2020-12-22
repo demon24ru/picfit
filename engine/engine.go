@@ -138,17 +138,17 @@ func (e Engine) Transform(output *image.ImageFile, operations []EngineOperation)
 		source    = output.Source
 	)
 
-	for i := range operations {
-		bcnd, err := e.getBackend(output)
+	bcnd, err := e.getBackend(output)
 
+	for i := range operations {
 		if err != nil {
-			continue
+			break
 		}
 
 		processed, err = operate(bcnd, output, operations[i].Operation, operations[i].Options)
 		if err == nil {
 			output.Source = processed
-			break
+			continue
 		}
 		if err != backend.MethodNotImplementedError {
 			return nil, err

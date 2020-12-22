@@ -69,6 +69,36 @@ func (e *Lilliput) Resize(img *imagefile.ImageFile, options *Options) ([]byte, e
 	return e.transform(img, opts, options.Upscale)
 }
 
+func (e *Lilliput) UploadResize(img *imagefile.ImageFile, options *Options) ([]byte, int, int, error) {
+	decoder, err := lilliput.NewDecoder(img.Source)
+	if err != nil {
+		return nil, 0, 0, errors.WithStack(err)
+	}
+	defer decoder.Close()
+
+	header, err := decoder.Header()
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	if float64(header.Width()) == math.Max(float64(header.Width()), float64(header.Height())) {
+		options.Width = 2000
+	} else {
+		options.Height = 2000
+	}
+
+	opts := &lilliput.ImageOptions{
+		FileType:             img.FilenameExt(),
+		Width:                options.Width,
+		Height:               options.Height,
+		NormalizeOrientation: true,
+		ResizeMethod:         lilliput.ImageOpsResize,
+		EncodeOptions:        e.EncodeOptions,
+	}
+
+	return e.engTransform(decoder, img, opts, options.Upscale)
+}
+
 func (e *Lilliput) Rotate(img *imagefile.ImageFile, options *Options) ([]byte, error) {
 	return nil, MethodNotImplementedError
 }
@@ -108,9 +138,18 @@ func (e *Lilliput) transform(img *imagefile.ImageFile, options *lilliput.ImageOp
 	}
 	defer decoder.Close()
 
+	out, _, _, err := e.engTransform(decoder, img, options, upscale)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return out, nil
+}
+
+func (e *Lilliput) engTransform(decoder lilliput.Decoder, img *imagefile.ImageFile, options *lilliput.ImageOptions, upscale bool) ([]byte, int, int, error) {
 	header, err := decoder.Header()
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
 	var (
@@ -120,7 +159,7 @@ func (e *Lilliput) transform(img *imagefile.ImageFile, options *lilliput.ImageOp
 
 	same, err := sameInputAndOutputHeader(bytes.NewReader(img.Source))
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
 	if same {
@@ -132,7 +171,7 @@ func (e *Lilliput) transform(img *imagefile.ImageFile, options *lilliput.ImageOp
 	}
 
 	if scalingFactor(srcW, srcH, options.Width, options.Height) > 1 && !upscale {
-		return img.Source, nil
+		return img.Source, header.Width(), header.Height(), nil
 	}
 
 	if options.Width == 0 {
@@ -149,7 +188,12 @@ func (e *Lilliput) transform(img *imagefile.ImageFile, options *lilliput.ImageOp
 
 	outputImg := make([]byte, e.ImageBufferSize)
 
-	return ops.Transform(decoder, options, outputImg)
+	out, err := ops.Transform(decoder, options, outputImg)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
+	return out, options.Width, options.Height, nil
 }
 
 func (e *Lilliput) String() string {

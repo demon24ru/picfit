@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image/gif"
+	"math"
 	"os/exec"
 
 	"github.com/thoas/picfit/image"
@@ -57,6 +58,40 @@ func (b *Gifsicle) Resize(imgfile *image.ImageFile, opts *Options) ([]byte, erro
 		return nil, err
 	}
 	return stdout.Bytes(), nil
+}
+
+// UploadResize implements Backend.
+func (b *Gifsicle) UploadResize(imgfile *image.ImageFile, opts *Options) ([]byte, int, int, error) {
+	img, err := gif.Decode(bytes.NewReader(imgfile.Source))
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	bounds := img.Bounds()
+	if float64(bounds.Dx()) == math.Max(float64(bounds.Dx()), float64(bounds.Dy())) {
+		opts.Width = 2000
+	} else {
+		opts.Height = 2000
+	}
+	cmd := exec.Command(b.Path,
+		"--resize", fmt.Sprintf("%dx%d", opts.Width, opts.Height),
+	)
+	cmd.Stdin = bytes.NewReader(imgfile.Source)
+	stdout := new(bytes.Buffer)
+	cmd.Stdout = stdout
+	stderr := new(bytes.Buffer)
+	cmd.Stderr = stderr
+
+	var target *exec.ExitError
+	if err := cmd.Run(); errors.As(err, &target) && target.Exited() {
+		return nil, 0, 0, errors.New(stderr.String())
+	} else if err != nil {
+		return nil, 0, 0, err
+	}
+	img, err = gif.Decode(bytes.NewReader(stdout.Bytes()))
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return stdout.Bytes(), img.Bounds().Dx(), img.Bounds().Dy(), nil
 }
 
 // Rotate implements Backend.

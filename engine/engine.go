@@ -43,7 +43,7 @@ func New(cfg config.Config) *Engine {
 
 			if _, err := exec.LookPath(path); err == nil {
 				b = append(b, Backend{
-					//	Backend:   &backend.Gifsicle{Path: path},
+					Backend:   &backend.Gifsicle{Path: path},
 					mimetypes: cfg.Backends.Gifsicle.Mimetypes,
 					weight:    cfg.Backends.Gifsicle.Weight,
 				})
@@ -58,7 +58,7 @@ func New(cfg config.Config) *Engine {
 		}
 		if cfg.Backends.Lilliput != nil {
 			b = append(b, Backend{
-				//	Backend:   backend.NewLilliput(cfg),
+				Backend:   backend.NewLilliput(cfg),
 				mimetypes: cfg.Backends.Lilliput.Mimetypes,
 				weight:    cfg.Backends.Lilliput.Weight,
 			})
@@ -84,8 +84,8 @@ func New(cfg config.Config) *Engine {
 
 func (e Engine) String() string {
 	backendNames := []string{}
-	for _, backendd := range e.backends {
-		backendNames = append(backendNames, backendd.String())
+	for _, backend := range e.backends {
+		backendNames = append(backendNames, backend.String())
 	}
 
 	return strings.Join(backendNames, " ")
@@ -138,8 +138,9 @@ func (e Engine) Transform(output *image.ImageFile, operations []EngineOperation)
 		source    = output.Source
 	)
 
-	bcnd, err := e.getBackend(output)
 	for i := range operations {
+		bcnd, err := e.getBackend(output)
+
 		if err != nil {
 			continue
 		}
@@ -162,8 +163,6 @@ func (e Engine) Transform(output *image.ImageFile, operations []EngineOperation)
 
 func operate(b backend.Backend, img *image.ImageFile, operation Operation, options *backend.Options) ([]byte, error) {
 	switch operation {
-	//case Noop:
-	//	return img.Source, nil
 	case Flip:
 		return b.Flip(img, options)
 	case Rotate:

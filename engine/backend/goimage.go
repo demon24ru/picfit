@@ -137,15 +137,6 @@ func (e *GoImage) TransformGIF(img *imagefile.ImageFile, options *Options, trans
 	return e.engGIF(first, img, options, trans)
 }
 
-func (e *GoImage) TransformUploadGIF(img *imagefile.ImageFile, options *Options, trans Transformation) ([]byte, int, int, error) {
-	first, err := gif.Decode(bytes.NewReader(img.Source))
-	if err != nil {
-		return nil, 0, 0, err
-	}
-
-	return e.engGIF(first, img, maxResizeOptions(first, options), trans)
-}
-
 func (e *GoImage) Resize(img *imagefile.ImageFile, options *Options) ([]byte, error) {
 	if options.Format == imaging.GIF {
 		content, _, _, err := e.TransformGIF(img, options, imaging.Resize)
@@ -169,12 +160,12 @@ func (e *GoImage) UploadResize(img *imagefile.ImageFile, options *Options) ([]by
 	out := img.Source
 
 	if options.Format == imaging.GIF {
-		content, width, height, err := e.TransformUploadGIF(img, options, imaging.Resize)
+		first, err := gif.Decode(bytes.NewReader(img.Source))
 		if err != nil {
 			return nil, 0, 0, err
 		}
 
-		return content, width, height, nil
+		return e.engGIF(first, img, maxResizeOptions(first, options), imaging.Resize)
 	}
 
 	image, err := e.Source(img)
